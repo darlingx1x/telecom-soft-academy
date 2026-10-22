@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "functions": {
+    "api/index.mjs": {
+      "includeFiles": "migrations/001_postgres.sql"
+    }
+  },
+  "rewrites": [
+    {"source": "/api/:path*", "destination": "/api/index"}
+  ]
+}

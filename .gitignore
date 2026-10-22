@@ -19,3 +19,4 @@ coverage/
 *.key
 .DS_Store
 Thumbs.db
+.neon

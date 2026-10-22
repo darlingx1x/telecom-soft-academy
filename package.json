@@ -8,12 +8,20 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "start": "node server.mjs",
+    "start": "node --env-file-if-exists=.env.local server.mjs",
+    "build": "npm run check && node --check database.mjs && node --check api/index.mjs && node --check scripts/import-sqlite-to-neon.mjs",
+    "db:import": "node --env-file-if-exists=.env.local scripts/import-sqlite-to-neon.mjs",
     "check": "node --check server.mjs && node --check workspace.mjs && node --check seed.mjs && node --check lesson-examples.mjs && node --check learning-content.mjs && node --check public/app.js && node --check public/workspace.js && node --check public/illustrations.js",
     "test": "node tests/verify.mjs && node tests/verify-workspace.mjs",
     "test:workspace": "node tests/verify-workspace.mjs"
   },
   "devDependencies": {
     "playwright": "^1.56.0"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.3",
+    "@neon/env": "^1.6.4",
+    "@vercel/functions": "^3.10.2",
+    "pg": "^8.23.1"
   }
 }
