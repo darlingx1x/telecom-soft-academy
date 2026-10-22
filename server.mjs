@@ -20,6 +20,7 @@ const db = isPostgres ? postgresDb : (() => {
 const sqliteSchema = `PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('student','teacher','admin')), department TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, expires INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS login_aliases(username TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, password_hash TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS courses(id INTEGER PRIMARY KEY, slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, description TEXT NOT NULL, category TEXT NOT NULL, level TEXT NOT NULL, duration INTEGER NOT NULL, color TEXT NOT NULL, icon TEXT NOT NULL, tagline TEXT NOT NULL, skills TEXT NOT NULL, published INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS lessons(id INTEGER PRIMARY KEY, course_id INTEGER NOT NULL REFERENCES courses(id), position INTEGER NOT NULL, title TEXT NOT NULL, minutes INTEGER NOT NULL, body TEXT NOT NULL, UNIQUE(course_id,position));
 CREATE TABLE IF NOT EXISTS questions(id INTEGER PRIMARY KEY, course_id INTEGER NOT NULL REFERENCES courses(id), prompt TEXT NOT NULL, options TEXT NOT NULL, correct INTEGER NOT NULL, explanation TEXT NOT NULL);
@@ -70,6 +71,10 @@ for (const c of curriculum) {
   if (stored) await Promise.all(c.lessons.map(async (l, i) => {
     if (l.originalBody) await run('UPDATE lessons SET body=? WHERE course_id=? AND position=? AND title=? AND body=?', l.body, stored.id, i + 1, l.title, l.originalBody);
   }));
+}
+const dilnora = await one('SELECT id FROM users WHERE email=?', 'student@academy.test');
+if (dilnora && !(await one('SELECT username FROM login_aliases WHERE username=?', 'dilnora'))) {
+  await run('INSERT INTO login_aliases(username,user_id,password_hash) VALUES(?,?,?)', 'dilnora', dilnora.id, hashPassword('dilnora'));
 }
 });
 const safeUser = u => ({
@@ -201,10 +206,11 @@ async function api(req, res, url) {
     if (history.count >= 15 && history.until > Date.now()) fail(429, 'Слишком много попыток. Повторите через 15 минут.');
     const b = await body(req);
     const identifier = text(b.email, 'Почта или логин', 3, 200).toLowerCase();
+    const alias = await one('SELECT user_id,password_hash FROM login_aliases WHERE username=?', identifier);
     const email = identifier === 'admin' ? 'admin@academy.test' : identifier;
     const password = text(b.password, 'Пароль', 1, 200);
-    const u = await one('SELECT * FROM users WHERE email=?', email);
-    if (!u || !verifyPassword(password, u.password_hash)) {
+    const u = alias ? await one('SELECT * FROM users WHERE id=?', alias.user_id) : await one('SELECT * FROM users WHERE email=?', email);
+    if (!u || !verifyPassword(password, alias?.password_hash || u.password_hash)) {
       const next = history.until > Date.now() ? history : {
         count: 0,
         until: Date.now() + 900000
