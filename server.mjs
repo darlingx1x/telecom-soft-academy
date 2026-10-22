@@ -194,7 +194,7 @@ async function api(req, res, url) {
   if (!['GET', 'HEAD'].includes(method)) {
     if (!req.headers['content-type']?.startsWith('application/json')) fail(415, 'Ожидается JSON.');
     const origin = req.headers.origin;
-    const expected = process.env.PUBLIC_ORIGIN || `http://${req.headers.host}`;
+    const expected = `${process.env.VERCEL ? 'https' : 'http'}://${req.headers.host}`;
     if (origin && origin !== expected) fail(403, 'Недопустимый источник запроса.');
   }
   if (path === '/api/login' && method === 'POST') {
