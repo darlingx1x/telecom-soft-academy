@@ -1,4 +1,5 @@
 import { articles, practiceBriefs, defaultBrief } from './learning-content.mjs';
+import { learningAnalytics } from './analytics.mjs';
 export async function createWorkspace({
   db,
   all,
@@ -59,6 +60,10 @@ CREATE INDEX IF NOT EXISTS submissions_status ON submissions(status,updated_at);
     const p = url.pathname.slice('/api/workspace/'.length),
       m = req.method;
     let match;
+    if (p === 'analytics' && m === 'GET') {
+      requireRole(u, 'teacher', 'admin');
+      return json(res, 200, await learningAnalytics(all));
+    }
     if (p === 'overview' && m === 'GET') {
       const staff = u.role !== 'student';
       const rows = staff ? await reportRows() : [];

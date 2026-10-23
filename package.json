@@ -1,6 +1,6 @@
 {
   "name": "telecom-soft-academy",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Учебный прототип портала обучения персонала TELECOM SOFT для ВКР",
@@ -11,9 +11,10 @@
     "start": "node --env-file-if-exists=.env.local server.mjs",
     "build": "npm run check && node --check database.mjs && node --check api/index.mjs && node --check scripts/import-sqlite-to-neon.mjs",
     "db:import": "node --env-file-if-exists=.env.local scripts/import-sqlite-to-neon.mjs",
-    "check": "node --check server.mjs && node --check workspace.mjs && node --check seed.mjs && node --check lesson-examples.mjs && node --check learning-content.mjs && node --check public/app.js && node --check public/workspace.js && node --check public/illustrations.js",
-    "test": "node tests/verify.mjs && node tests/verify-workspace.mjs",
-    "test:workspace": "node tests/verify-workspace.mjs"
+    "check": "node --check server.mjs && node --check workspace.mjs && node --check seed.mjs && node --check lesson-examples.mjs && node --check learning-content.mjs && node --check public/app.js && node --check public/workspace.js && node --check public/illustrations.js && node --check analytics.mjs && node --check public/analytics.js && node --check scripts/seed-analytics-demo.mjs",
+    "test": "node tests/verify.mjs && node tests/verify-workspace.mjs && node tests/verify-analytics.mjs",
+    "test:workspace": "node tests/verify-workspace.mjs",
+    "test:analytics": "node tests/verify-analytics.mjs"
   },
   "devDependencies": {
     "playwright": "^1.56.0"
